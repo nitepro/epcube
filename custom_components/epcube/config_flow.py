@@ -3,7 +3,10 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 import aiohttp
 import logging
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_SCALE_POWER, CONF_ENABLE_TOTAL, CONF_ENABLE_ANNUAL, CONF_ENABLE_MONTHLY
+from .const import (
+    DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_SCALE_POWER,
+    CONF_ENABLE_TOTAL, CONF_ENABLE_ANNUAL, CONF_ENABLE_MONTHLY, get_base_url
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,11 +20,12 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if user_input is not None:
+            region = user_input["region"]
             token = user_input["token"].strip()
             if not token.startswith("Bearer "):
                 token = f"Bearer {token}"
 
-            sn = await self._get_sn_from_token(token)
+            sn = await self._get_sn_from_token(token, region)
 
             if not sn:
                 self._errors["base"] = "sn_not_found"
@@ -36,6 +40,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         "token": token,
                         "sn": sn,
+                        "region": region
                     },
                 )
 
@@ -43,12 +48,14 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required("token"): str,
+                vol.Required("region", default="EU"): vol.In(["EU", "US"]),
             }),
             errors=self._errors,
         )
 
-    async def _get_sn_from_token(self, token):
-        url = "https://monitoring-eu.epcube.com/api/user/user/base"
+    async def _get_sn_from_token(self, token, region):
+        base_url = get_base_url(region)
+        url = f"{base_url}/api/user/user/base"
         headers = {
             "accept": "*/*",
             "accept-language": "it-IT",
@@ -90,6 +97,7 @@ class EpCubeOptionsFlow(config_entries.OptionsFlow):
                 CONF_ENABLE_TOTAL: user_input.get(CONF_ENABLE_TOTAL, False),
                 CONF_ENABLE_ANNUAL: user_input.get(CONF_ENABLE_ANNUAL, False),
                 CONF_ENABLE_MONTHLY: user_input.get(CONF_ENABLE_MONTHLY, False),
+                "region": user_input.get("region", self._config_entry.data.get("region", "EU")),
             })
 
         return self.async_show_form(
@@ -100,5 +108,6 @@ class EpCubeOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_ENABLE_TOTAL, default=self._config_entry.options.get(CONF_ENABLE_TOTAL, False)): bool,
                 vol.Optional(CONF_ENABLE_ANNUAL, default=self._config_entry.options.get(CONF_ENABLE_ANNUAL, False)): bool,
                 vol.Optional(CONF_ENABLE_MONTHLY, default=self._config_entry.options.get(CONF_ENABLE_MONTHLY, False)): bool,
+                vol.Optional("region", default=self._config_entry.data.get("region", "EU")): vol.In(["EU", "US"]),
             })
         )

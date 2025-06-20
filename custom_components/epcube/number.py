@@ -1,7 +1,7 @@
 from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import EntityCategory
-from .const import DOMAIN
+from .const import DOMAIN, get_base_url
 
 import aiohttp
 import logging
@@ -27,6 +27,8 @@ class EpCubeDynamicSocNumber(CoordinatorEntity, NumberEntity):
         super().__init__(coordinator)
         self.entry = entry
         self.coordinator = coordinator
+        self.region = entry.data.get("region", "EU")
+        self.base_url = get_base_url(self.region)
         self.entity_description = NumberEntityDescription(
             key="epcube_dynamic_soc",
             name="EPCUBE SOC Dinamico",
@@ -42,7 +44,7 @@ class EpCubeDynamicSocNumber(CoordinatorEntity, NumberEntity):
             "manufacturer": "CanadianSolar",
             "model": "EPCUBE",
             "entry_type": "service",
-            "configuration_url": "https://monitoring-eu.epcube.com/"
+            "configuration_url": f"{self.base_url}/"
         }
 
         if coordinator.data and coordinator.data.get("data"):
@@ -93,7 +95,7 @@ class EpCubeDynamicSocNumber(CoordinatorEntity, NumberEntity):
         await self._post_switch_mode(payload)
 
     async def _post_switch_mode(self, payload):
-        url = "https://monitoring-eu.epcube.com/api/device/switchMode"
+        url = f"{self.base_url}/api/device/switchMode"
         headers = {
             "Content-Type": "application/json",
             "Authorization": self.entry.data.get("token"),
@@ -117,6 +119,8 @@ class EpCubeStaticSocNumber(CoordinatorEntity, NumberEntity):
         super().__init__(coordinator)
         self.entry = entry
         self.coordinator = coordinator
+        self.region = entry.data.get("region", "EU")
+        self.base_url = get_base_url(self.region)
         self.original_key = SOC_KEYS.get(key.lower(), key)
         self.entity_description = NumberEntityDescription(
             key=self.original_key,
@@ -136,7 +140,7 @@ class EpCubeStaticSocNumber(CoordinatorEntity, NumberEntity):
             "manufacturer": "CanadianSolar",
             "model": "EPCUBE",
             "entry_type": "service",
-            "configuration_url": "https://monitoring-eu.epcube.com/"
+            "configuration_url": f"{self.base_url}/"
         }
 
     @property
@@ -163,7 +167,7 @@ class EpCubeStaticSocNumber(CoordinatorEntity, NumberEntity):
         await self._post_switch_mode(payload)
 
     async def _post_switch_mode(self, payload):
-        url = "https://monitoring-eu.epcube.com/api/device/switchMode"
+        url = f"{self.base_url}/api/device/switchMode"
         headers = {
             "Content-Type": "application/json",
             "Authorization": self.entry.data.get("token"),

@@ -8,7 +8,7 @@ from homeassistant.helpers.entity_registry import async_get, RegistryEntryDisabl
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .state import EpCubeDataState
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_ENABLE_TOTAL, CONF_ENABLE_ANNUAL, CONF_ENABLE_MONTHLY
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_ENABLE_TOTAL, CONF_ENABLE_ANNUAL, CONF_ENABLE_MONTHLY, get_base_url
 import aiohttp
 import async_timeout
 from datetime import timedelta, datetime, date
@@ -160,8 +160,9 @@ def generate_sensors(data, enable_total=False, enable_annual=False, enable_month
 
     return sensors
 
-async def fetch_device_info(session, token, dev_id):
-    url = f"https://monitoring-eu.epcube.com/api/device/userDeviceInfo?devId={dev_id}"
+async def fetch_device_info(session, token, dev_id, region):
+    base_url = get_base_url(region)
+    url = f"{base_url}/api/device/userDeviceInfo?devId={dev_id}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",
@@ -176,8 +177,9 @@ async def fetch_device_info(session, token, dev_id):
         normalized = {k.lower(): v for k, v in raw_data.items()}
         return normalized
 
-async def fetch_epcube_stats(session, token, dev_id, date_str, scope_type):
-    url = f"https://monitoring-eu.epcube.com/api/device/queryDataElectricityV2?devId={dev_id}&queryDateStr={date_str}&scopeType={scope_type}"
+async def fetch_epcube_stats(session, token, dev_id, date_str, scope_type, region):
+    base_url = get_base_url(region)
+    url = f"{base_url}/api/device/queryDataElectricityV2?devId={dev_id}&queryDateStr={date_str}&scopeType={scope_type}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",
@@ -193,6 +195,9 @@ async def fetch_epcube_stats(session, token, dev_id, date_str, scope_type):
         return normalized
 
 async def async_update_data_with_stats(session, url, headers, dev_id_sn, token, hass, entry_id):
+    config_entry = hass.data[DOMAIN][entry_id].get("config_entry")
+    region = config_entry.data.get("region", "EU") if config_entry else "EU"
+    base_url = get_base_url(region)
     try:
         with async_timeout.timeout(15):
             async with session.get(url, headers=headers) as resp:
@@ -209,14 +214,14 @@ async def async_update_data_with_stats(session, url, headers, dev_id_sn, token, 
                 month_str = now.strftime("%Y-%m")
                 today_str = now.strftime("%Y-%m-%d")
 
-                live_data = await fetch_epcube_stats(session, token, real_dev_id, today_str, 1)
-                total_data = await fetch_epcube_stats(session, token, real_dev_id, year_str, 0)
-                annual_data = await fetch_epcube_stats(session, token, real_dev_id, year_str, 3)
-                monthly_data = await fetch_epcube_stats(session, token, real_dev_id, month_str, 2)
+                live_data = await fetch_epcube_stats(session, token, real_dev_id, today_str, 1, region)
+                total_data = await fetch_epcube_stats(session, token, real_dev_id, year_str, 0, region)
+                annual_data = await fetch_epcube_stats(session, token, real_dev_id, year_str, 3, region)
+                monthly_data = await fetch_epcube_stats(session, token, real_dev_id, month_str, 2, region)
 
-                device_info = await fetch_device_info(session, token, real_dev_id)
+                device_info = await fetch_device_info(session, token, real_dev_id, region)
 
-                switch_url = f"https://monitoring-eu.epcube.com/api/device/getSwitchMode?devId={real_dev_id}"
+                switch_url = f"{base_url}/api/device/getSwitchMode?devId={real_dev_id}"
                 async with session.get(switch_url, headers=headers) as switch_resp:
                     switch_json = await switch_resp.json()
                     switch_data = switch_json.get("data", {})
@@ -275,8 +280,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
         enable_monthly=enable_monthly
     )
 
+    region = entry.data.get("region", "EU")
+
     entities = [
-        EpCubeSensor(coordinator, sensor) for sensor in sensors
+        EpCubeSensor(coordinator, sensor, region) for sensor in sensors
     ] + [
         EpCubeLastUpdateSensor(coordinator),
         EpCubeBatteryChargeSensor(coordinator),
@@ -285,6 +292,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         EpCubeBatteryDailyDischargeSensor(coordinator),
         EpCubeBatteryPowerSensor(coordinator),
     ]
+    
 
     registry = async_get(hass)
 
@@ -310,8 +318,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     
 
 class EpCubeSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, coordinator, description):
+    def __init__(self, coordinator, description, region):
         super().__init__(coordinator)
+        base_url = get_base_url(region)
         self.coordinator = coordinator
         self.entity_description = description
         self._attr_unique_id = f"epcube_{description.key}"
@@ -327,7 +336,7 @@ class EpCubeSensor(CoordinatorEntity, SensorEntity):
             "manufacturer": "CanadianSolar",
             "model": "EPCUBE",
             "entry_type": "service",
-            "configuration_url": "https://monitoring-eu.epcube.com/"
+            "configuration_url": f"{base_url}/"
         }
 
     @property

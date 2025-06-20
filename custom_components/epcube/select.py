@@ -1,7 +1,7 @@
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import EntityCategory
-from .const import DOMAIN
+from .const import DOMAIN, get_base_url
 
 import logging
 import aiohttp
@@ -26,6 +26,7 @@ class EpCubeModeSelect(CoordinatorEntity, SelectEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.entry = entry
+        self.region = entry.data.get("region", "EU")
         self.entity_description = SelectEntityDescription(
             key="workstatus",
             name="EP CUBE Modalità",
@@ -69,7 +70,8 @@ class EpCubeModeSelect(CoordinatorEntity, SelectEntity):
         await self._post_switch_mode(payload)
 
     async def _post_switch_mode(self, payload):
-        url = "https://monitoring-eu.epcube.com/api/device/switchMode"
+        base_url = get_base_url(self.region)
+        url = f"{base_url}/api/device/switchMode"
         headers = {
             "accept": "*/*",
             "content-type": "application/json",

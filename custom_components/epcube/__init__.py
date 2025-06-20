@@ -1,6 +1,6 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from .const import DOMAIN, PLATFORMS, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, PLATFORMS, DEFAULT_SCAN_INTERVAL, get_base_url
 from .sensor import async_update_data_with_stats
 from .state import EpCubeDataState
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -16,10 +16,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     token = entry.data["token"]
     sn = entry.data["sn"]
+    region = entry.data.get("region", "EU")
     scan_interval = entry.options.get("scan_interval", DEFAULT_SCAN_INTERVAL)
 
     session = async_get_clientsession(hass)
-    url = f"https://monitoring-eu.epcube.com/api/device/homeDeviceInfo?&sgSn={sn}"
+    base_url = get_base_url(region)
+    url = f"{base_url}/api/device/homeDeviceInfo?&sgSn={sn}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",
@@ -43,7 +45,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
-        "state": state
+        "state": state,
+        "config_entry": entry,
     }
     
     await coordinator.async_refresh()
