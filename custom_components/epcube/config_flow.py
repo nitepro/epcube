@@ -55,7 +55,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _get_sn_from_token(self, token, region):
         base_url = get_base_url(region)
-        url = f"{base_url}/api/user/user/base"
+        url = f"{base_url}/user/user/base"
         headers = {
             "accept": "*/*",
             "accept-language": "it-IT",

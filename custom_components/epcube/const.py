@@ -10,8 +10,8 @@ CONF_ENABLE_MONTHLY = "enable_monthly"
 
 
 BASE_URLS = {
-    "EU": "https://monitoring-eu.epcube.com",
-    "US": "https://monitoring-us.epcube.com"
+    "EU": "https://monitoring-eu.epcube.com/api",
+    "US": "https://epcube-monitoring.com/app-api"
 }
 
 def get_base_url(region: str) -> str:

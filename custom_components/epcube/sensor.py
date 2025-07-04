@@ -162,7 +162,7 @@ def generate_sensors(data, enable_total=False, enable_annual=False, enable_month
 
 async def fetch_device_info(session, token, dev_id, region):
     base_url = get_base_url(region)
-    url = f"{base_url}/api/device/userDeviceInfo?devId={dev_id}"
+    url = f"{base_url}/device/userDeviceInfo?devId={dev_id}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",
@@ -179,7 +179,7 @@ async def fetch_device_info(session, token, dev_id, region):
 
 async def fetch_epcube_stats(session, token, dev_id, date_str, scope_type, region):
     base_url = get_base_url(region)
-    url = f"{base_url}/api/device/queryDataElectricityV2?devId={dev_id}&queryDateStr={date_str}&scopeType={scope_type}"
+    url = f"{base_url}/device/queryDataElectricityV2?devId={dev_id}&queryDateStr={date_str}&scopeType={scope_type}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",
@@ -221,7 +221,7 @@ async def async_update_data_with_stats(session, url, headers, dev_id_sn, token, 
 
                 device_info = await fetch_device_info(session, token, real_dev_id, region)
 
-                switch_url = f"{base_url}/api/device/getSwitchMode?devId={real_dev_id}"
+                switch_url = f"{base_url}/device/getSwitchMode?devId={real_dev_id}"
                 async with session.get(switch_url, headers=headers) as switch_resp:
                     switch_json = await switch_resp.json()
                     switch_data = switch_json.get("data", {})

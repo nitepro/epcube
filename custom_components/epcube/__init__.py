@@ -21,7 +21,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     session = async_get_clientsession(hass)
     base_url = get_base_url(region)
-    url = f"{base_url}/api/device/homeDeviceInfo?&sgSn={sn}"
+    url = f"{base_url}/device/homeDeviceInfo?&sgSn={sn}"
     headers = {
         "accept": "*/*",
         "accept-language": "it-IT",

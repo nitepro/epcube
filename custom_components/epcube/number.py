@@ -95,7 +95,7 @@ class EpCubeDynamicSocNumber(CoordinatorEntity, NumberEntity):
         await self._post_switch_mode(payload)
 
     async def _post_switch_mode(self, payload):
-        url = f"{self.base_url}/api/device/switchMode"
+        url = f"{self.base_url}/device/switchMode"
         headers = {
             "Content-Type": "application/json",
             "Authorization": self.entry.data.get("token"),
@@ -167,7 +167,7 @@ class EpCubeStaticSocNumber(CoordinatorEntity, NumberEntity):
         await self._post_switch_mode(payload)
 
     async def _post_switch_mode(self, payload):
-        url = f"{self.base_url}/api/device/switchMode"
+        url = f"{self.base_url}/device/switchMode"
         headers = {
             "Content-Type": "application/json",
             "Authorization": self.entry.data.get("token"),
