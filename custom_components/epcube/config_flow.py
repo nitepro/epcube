@@ -48,7 +48,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required("token"): str,
-                vol.Required("region", default="EU"): vol.In(["EU", "US"]),
+                vol.Required("region", default="EU"): vol.In(["EU", "US", "JP"]),
             }),
             errors=self._errors,
         )
@@ -108,6 +108,6 @@ class EpCubeOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_ENABLE_TOTAL, default=self._config_entry.options.get(CONF_ENABLE_TOTAL, False)): bool,
                 vol.Optional(CONF_ENABLE_ANNUAL, default=self._config_entry.options.get(CONF_ENABLE_ANNUAL, False)): bool,
                 vol.Optional(CONF_ENABLE_MONTHLY, default=self._config_entry.options.get(CONF_ENABLE_MONTHLY, False)): bool,
-                vol.Optional("region", default=self._config_entry.data.get("region", "EU")): vol.In(["EU", "US"]),
+                vol.Optional("region", default=self._config_entry.data.get("region", "EU")): vol.In(["EU", "US", "JP"]),
             })
         )
