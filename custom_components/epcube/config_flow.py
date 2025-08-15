@@ -55,7 +55,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _get_sn_from_token(self, token, region):
         base_url = get_base_url(region)
-        url = f"{base_url}/user/user/base"
+        url = f"{base_url}/home/deviceList"
         headers = {
             "accept": "*/*",
             "accept-language": "it-IT",
@@ -69,7 +69,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if response.status == 200:
                         data = await response.json()
                         _LOGGER.debug("Risposta user/base: %s", data)
-                        return data.get("data", {}).get("defDevSgSn")
+                        return data.get("data", {}).get("sgSn")
                     else:
                         _LOGGER.error("Errore HTTP %s nella richiesta user/base", response.status)
             except Exception as e:
