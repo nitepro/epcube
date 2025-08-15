@@ -28,7 +28,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             sn = await self._get_sn_from_token(token, region)
 
             if not sn:
-                self._errors["base"] = "sn_not_found"
+                self._errors["base"] = "sn2_not_found"
             else:
                 for entry in self._async_current_entries():
                     if entry.data.get("sn") == sn:
