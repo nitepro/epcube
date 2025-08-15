@@ -69,7 +69,7 @@ class EpCubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if response.status == 200:
                         data = await response.json()
                         _LOGGER.debug("Risposta user/base: %s", data)
-                        return data.get("data", {}).get("sgSn")
+                        return data.get("data", [{}])[0].get("sgSn")
                     else:
                         _LOGGER.error("Errore HTTP %s nella richiesta user/base", response.status)
             except Exception as e:
